@@ -165,31 +165,26 @@ int main(int argc, char **argv)
 */
 void eval(char *cmdline) 
 {
-    char *argv[MAXARGS];        /* Argument list execve() */
-    char buf[MAXLINE];          /* Holds modified command line */
-    int bg;                     /* Should the job run in bg or fg */
-    pid_t pid;                  /* Process id */
-    sigset_t mask_all,mask_one,prev_one;
-    
+    char *argv[MAXARGS];       // Argument list
+    char buf[MAXLINE];          // Holds modified command line
+    int bg;                     // Should the job run in background or foreground                        
+    pid_t pid;                  // Process id
+
     strcpy(buf,cmdline);
     bg = parseline(buf,argv);
-    if(argv[0] == NULL)
-        return;                 /* Ignore empty lines */
-    
-    if(!builtin_cmd(argv)){
-        sigfillset(&mask_all);
-        sigemptyset(&mask_one);
-        sigaddset(&mask_one,SIGCHLD);
-        sigprocmask(SIG_BLOCK,&mask_one,&prev_one); /* Block SIGCLD */
+    if(argv[0] == NULL){
+        return;                 // Ignore empty line
+    }
 
-        if((pid = fork()) == 0){    /* Child runs user job */
-            if(execve(argv[0],argv,environ) < 0){
+    if(!builtin_cmd(argv)){
+        if((pid = fork()) == 0){    // Child process runs user job
+            if(execve(argv[0], argv, environ) < 0){
                 printf("%s: Command not found.\n",argv[0]);
                 exit(0);
             }
         }
 
-        /* Parent waits for foreground job to terminate */
+        // Parent waits for foreground job to terminate
         if(!bg){
             int status;
             if(waitpid(pid,&status,0) < 0){
@@ -266,6 +261,17 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv) 
 {
+    if(!strcmp(argv[0], "quit")){       // quit command
+        exit(0);
+    }
+    if(!strcmp(argv[0], "bg") || !strcmp(argv[0], "fg")){         // background job or foreground job
+        do_bgfg(argv);
+        return 1;
+    }
+    if(!strcmp(argv[0], "jobs")){       // list all the jobs
+        listjobs(jobs);
+        return 1;
+    }
     return 0;     /* not a builtin command */
 }
 

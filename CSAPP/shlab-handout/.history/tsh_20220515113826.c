@@ -262,11 +262,13 @@ int parseline(const char *cmdline, char **argv)
 int builtin_cmd(char **argv) 
 {
     if(!strcmp(argv[0], "quit")){       // quit command
-        exit(0);
+
     }
-    if(!strcmp(argv[0], "bg") || !strcmp(argv[0], "fg")){         // background job or foreground job
-        do_bgfg(argv);
-        return 1;
+    if(!strcmp(argv[0], "bg")){         // background job
+
+    }
+    if(!strcmp(argv[0], "fg")){         // foreground job
+    
     }
     if(!strcmp(argv[0], "jobs")){       // list all the jobs
         listjobs(jobs);
