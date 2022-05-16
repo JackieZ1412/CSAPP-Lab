@@ -185,7 +185,7 @@ void eval(char *cmdline)
             setpgid(0,0);
             if(execve(argv[0], argv, environ) < 0){
                 printf("%s: Command not found.\n",argv[0]);
-                exit(1);
+                exit(0);
             }
         }
         else{
@@ -199,10 +199,13 @@ void eval(char *cmdline)
         }
         // Parent waits for foreground job to terminate
         if(!bg){
-            waitfg(pid);
+            int status;
+            if(waitpid(pid,&status,0) < 0){
+                unix_error("waitfg: waitpid error");
+            }
         }
         else{
-            printf("[%d] (%d) %s",pid2jid(pid),pid,cmdline);
+            printf("%d %s",pid,cmdline);
         }
     }
     return;
@@ -274,15 +277,12 @@ int builtin_cmd(char **argv)
     if(!strcmp(argv[0], "quit")){       // quit command
         exit(0);
     }
-    if(!strcmp("bg", argv[0]) || !(strcmp("fg", argv[0]))){         // background job or foreground job
+    if(!strcmp(argv[0], "bg") || !strcmp(argv[0], "fg")){         // background job or foreground job
         do_bgfg(argv);
         return 1;
     }
     if(!strcmp(argv[0], "jobs")){       // list all the jobs
         listjobs(jobs);
-        return 1;
-    }
-    if(!strcmp(argv[0], "&")){
         return 1;
     }
     return 0;     /* not a builtin command */
@@ -299,29 +299,26 @@ void do_bgfg(char **argv)
     }
     struct job_t *job;
     int id;
-    //sigset_t mask,prev;
-    char *param;
-    param = argv[1];
-    pid_t pid;
-    //sigfillset(&mask);
+    sigset_t mask,prev;
+    char *param = argv[1];
+    sigfillset(&mask);
     if(param[0] == '%'){
-        id = atoi(&param[1]);
-        job = getjobjid(jobs,id);
-        if(job == NULL){
-            printf("%%%d: No such job\n",id);
+        id = atoi(argv[1] + 1);
+        if(id == 0){
+            printf("%s: argument must be a legal pid or jid\n",param);
             //fflush(stdout);
             return;
         }
     }
     else{
-        pid = atoi(param);
-        job = getjobpid(jobs,pid);
-        if(job == NULL){
-            printf("%%%d: No such job\n",pid);
+        id = atoi(argv[1]);
+        if(id == 0){
+            printf("%s: argument must be a legal pid or jid\n",param);
             //fflush(stdout);
             return;
         }
-        //sigprocmask(SIG_BLOCK,&mask,&prev);
+        sigprocmask(SIG_BLOCK,&mask,&prev);
+        id = pid2jid(id);
     }
     if(!strcmp(argv[0],"bg")){
         kill(-(job->pid),SIGCONT);
@@ -341,10 +338,11 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
-    struct job_t* job;
-    job = getjobpid(jobs,pid);
-    while(job->state == FG){
-        sleep(1);
+    sigset_t mask;
+    sigemptyset(&mask);
+    int Is_foreground = 0;
+    while(!Is_foreground){
+        sigsuspend(&mask);
     }
     return;
 }
