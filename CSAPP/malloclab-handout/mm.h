@@ -1,13 +1,8 @@
 #include <stdio.h>
 
-static void *extend_heap(size_t words);
 extern int mm_init (void);
 extern void *mm_malloc (size_t size);
-static void *find_fit(size_t asize);
-//static void *place(void *bp, size_t asize);
-static void place(void *bp, size_t asize);
 extern void mm_free (void *ptr);
-static void *coalesce(void *bp);
 extern void *mm_realloc(void *ptr, size_t size);
 
 
