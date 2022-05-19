@@ -99,3 +99,15 @@ size_t mem_pagesize()
 {
     return (size_t)getpagesize();
 }
+
+size_t get_heapsize()
+{
+    return mem_brk - mem_start_brk;
+}
+int larger_than_brk(char *a)
+{
+    if(a - mem_brk > 0){
+    	return 1;
+    }
+    return 0;
+}

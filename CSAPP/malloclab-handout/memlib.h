@@ -8,4 +8,5 @@ void *mem_heap_lo(void);
 void *mem_heap_hi(void);
 size_t mem_heapsize(void);
 size_t mem_pagesize(void);
-
+size_t get_heapsize();
+int larger_than_brk(char *a);
